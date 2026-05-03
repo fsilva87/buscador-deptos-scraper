@@ -1,37 +1,38 @@
 name: Actualizar Departamentos
-
 on:
   schedule:
     - cron: '0 8,20 * * *'
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Configurar Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
+          python-version: '3.11'
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
           playwright install chromium
-
+          playwright install-deps chromium
       - name: Ejecutar Scraper
         run: python scraper.py
-
+      - name: Subir evidencia diagnóstica
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-evidencia
+          path: debug/
+          retention-days: 7
       - name: Subir JSON a GitHub
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action Bot"
           git add data.json
-          git commit -m "Actualización automática de departamentos" || exit 0
+          git commit -m "Actualización automática" || exit 0
           git push
